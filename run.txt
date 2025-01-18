@@ -1,0 +1,59 @@
+==STEPS TO INSTALL GCC/g++ COMPILER
+    Step 1: Download MinGW
+    Go to the MinGW-w64 project download page.
+    Scroll down to the "Windows" section and click on the "SourceForge" link under the "win-builds" column to download the MinGW installer.
+    Step 2: Install MinGW
+    Run the downloaded installer (mingw-w64-install.exe).
+    Choose the architecture you need (e.g., x86_64 for 64-bit).
+    Select the version (the default version is usually fine).
+    Choose the "posix" threading model and the "seh" exception handling model.
+    Select the installation directory (e.g., C:\mingw-w64).
+    Click "Next" and complete the installation.
+    Step 3: Add MinGW to the System PATH
+    Open the Start menu and search for "Environment Variables."
+    Click on "Edit the system environment variables."
+    In the System Properties window, click on the "Environment Variables" button.
+    In the Environment Variables window, find the "Path" variable in the "System variables" section and click "Edit."
+    Click "New" and add the path to the bin directory of your MinGW installation (e.g., C:\mingw-w64\bin).
+    Click "OK" to close all windows.
+    Step 4: Verify the Installation
+    Open a new Command Prompt window.
+    Type g++ --version and press Enter. You should see the version information for g++.
+==STEPS TO DOWNLOAD AND INSTALL "SFML"    
+    Step 1: Download SFML
+    Go to the SFML download page.
+    Choose the version of SFML that matches your compiler. For example, if you're using MinGW-w64 (a popular choice for GCC on Windows), download the appropriate package.
+    Step 2: Extract the Files
+    Extract the downloaded SFML package to a directory of your choice, e.g., C:\SFML.
+    Step 3: Set Up Your Development Environment
+    You need to configure your development environment to use SFML. Below are the steps for setting up SFML with Code::Blocks and Visual Studio.
+
+    Using Code::Blocks with MinGW
+    Set Compiler and Linker Settings:
+
+    Open Code::Blocks and create a new project (e.g., a Console Application).
+    Go to Settings -> Compiler.
+    In the "Selected compiler" dropdown, select your MinGW compiler.
+    Go to the "Search directories" tab.
+    In the "Compiler" tab, add the path to the include directory of SFML (e.g., C:\SFML\include).
+    In the "Linker" tab, add the path to the lib directory of SFML (e.g., C:\SFML\lib).
+    Go to the "Linker settings" tab.
+    Add the following linker flags for the SFML modules you need (e.g., for graphics, window, and system modules):
+    diff
+    Copy code
+    -lsfml-graphics
+    -lsfml-window
+    -lsfml-system
+    Copy SFML DLLs:
+
+    Copy the necessary SFML DLL files from C:\SFML\bin to your project directory (or to a directory that is in your system's PATH).
+    for compiling and linking the code 
+==TO RUN THE  CODE
+1. for linux::: g++ -o window window.cpp GameState.cpp move.cpp castlingRights.cpp AIMove.cpp -lsfml-graphics -lsfml-window -lsfml-system
+   for windows::: g++ -o window window.cpp GameState.cpp move.cpp castlingRights.cpp -IC:\path\to\SFML\include -LC:\path\to\SFML\lib -lsfml-graphics -lsfml-window -lsfml-system
+
+to execute the compiled eindow.exe
+2. ./window
+
+
+macOs:: g++ -o window window.cpp GameState.cpp move.cpp castlingRights.cpp AIMove.cpp  -I/opt/homebrew/Cellar/sfml@2/2.6.2/include/ -L/opt/homebrew/Cellar/sfml@2/2.6.2/lib/ -lsfml-graphics -lsfml-window -lsfml-system -std=c++17
