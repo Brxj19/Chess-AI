@@ -208,11 +208,12 @@ int main() {
     bool humanTurn;
     AIMove ai;
 
-    sf::SoundBuffer moveBuffer, captureBuffer, castleBuffer, checkBuffer;
+    sf::SoundBuffer moveBuffer, captureBuffer, castleBuffer, checkBuffer, notifyBuffer;
     if (!moveBuffer.loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/assets/audio/move.wav") ||
         !captureBuffer.loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/assets/audio/capture.wav") ||
         !castleBuffer.loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/assets/audio/castle.wav") ||
-        !checkBuffer.loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/assets/audio/check.wav")) {
+        !checkBuffer.loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/assets/audio/check.wav") ||
+        !notifyBuffer.loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/assets/audio/notify.wav")) {
         std::cerr << "Error loading sound files" << std::endl;
         return -1;
     }
@@ -221,7 +222,10 @@ int main() {
     sf::Sound captureSound(captureBuffer);
     sf::Sound castleSound(castleBuffer);
     sf::Sound checkSound(checkBuffer);
+    sf::Sound notifySound(notifyBuffer);
 
+    notifySound.setVolume(100);
+    notifySound.play();
     while (window.isOpen()) {
         humanTurn = (gs.whiteToMove && playerOne) || (!gs.whiteToMove && playerTwo);
         sf::Event e;
@@ -269,15 +273,20 @@ int main() {
                                     playerClicks.clear();
 
                                     if (validMoves[i].castle) {
+                                        castleSound.setVolume(100);
                                         castleSound.play();
                                         
                                     }else if (validMoves[i].pieceCaptured != "--" && gs.inCheck()) {
+                                        checkSound.setVolume(100);
                                         checkSound.play();
                                     }else if (validMoves[i].pieceCaptured != "--" || validMoves[i].isEnpassant) {
+                                        captureSound.setVolume(100);
                                         captureSound.play();
                                     }else if (gs.inCheck()) {
+                                        checkSound.setVolume(100);
                                         checkSound.play();
                                     } else {
+                                        moveSound.setVolume(100);
                                         moveSound.play();
                                     }
                                     break;
@@ -318,15 +327,20 @@ int main() {
 
             // Play sound based on move type
             if (AIMove.castle) {
+                castleSound.setVolume(100);
                 castleSound.play();
             } 
             else if (AIMove.pieceCaptured != "--" && gs.inCheck()) {
+                checkSound.setVolume(100);
                 checkSound.play();
             }else if(AIMove.pieceCaptured != "--" || AIMove.isEnpassant){
+                captureSound.setVolume(100);
                 captureSound.play();
             }else if(gs.inCheck()){
+                checkSound.setVolume(100);
                 checkSound.play();
             }else {
+                moveSound.setVolume(100);
                 moveSound.play();
             }
         }
