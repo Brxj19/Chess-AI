@@ -11,7 +11,7 @@ public:
 std::map<char,int> pieceScore = {{'K',0},{'Q',10},{'R',5},{'B',3},{'N',3},{'p',1}};
 int CHECKMATE = 1000;
 int STALEMATE = 0;
-int DEPTH = 3;
+int DEPTH = 4;
 
 int scoreTheMaterial(std::vector<std::vector<std::string>> &board);
 int scoreBoard(GameState gs);

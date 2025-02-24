@@ -172,7 +172,14 @@ void DrawMoveLog(sf::RenderWindow &window,GameState gs){
         text.setStyle(sf::Text::Bold);
         text.setPosition(x,y);
         window.draw(text);
-        y+=charSize;
+        
+        if(x < width + 190){
+            x += 34;
+        }else{
+            x = width + 12;
+            y+=charSize;
+        }
+    
     }
 }
 void DrawGameState(sf::RenderWindow &window,GameState gs,int sq_size,std::map<std::string, sf::Texture> &images,const std::vector<Move> &validMoves,std::pair<int,int> sqSelected){
@@ -204,7 +211,7 @@ int main() {
     std::vector<std::pair<int,int>> playerClicks = {};
     //sf::Clock clock;
     bool playerOne = true;//it is true when a human is playing as white and false when AI playes white
-    bool playerTwo = false; // its same as above but for black 
+    bool playerTwo = true; // its same as above but for black 
     bool humanTurn;
     AIMove ai;
 
