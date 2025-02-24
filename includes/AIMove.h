@@ -14,11 +14,14 @@ int STALEMATE = 0;
 int DEPTH = 3;
 
 int scoreTheMaterial(std::vector<std::vector<std::string>> &board);
+int scoreBoard(GameState gs);
+
 Move findRandomMove(const std::vector<Move>& validMoves);
 Move findBestMove(GameState gs,const std::vector<Move> validMoves);
-Move findBestMoveMinMax(GameState gs,const std::vector<Move> validMoves);
+//Move findBestMoveMinMax(GameState gs,const std::vector<Move> validMoves);
 int findMoveMinMax(GameState gs,const std::vector<Move> validMoves,int depth, bool whiteToMove);
-int scoreBoard(GameState gs);
+int findMoveNegamax(GameState gs,const std::vector<Move> validMoves,int depth, int turnMultiplier);
+int findMoveNegamaxAlphaBeta(GameState gs,const std::vector<Move> validMoves,int depth, int turnMultiplier,int alpha,int beta);
 };
 
 

@@ -56,4 +56,5 @@ to execute the compiled eindow.exe
 2. ./window
 
 
-macOs:: g++ -o window window.cpp GameState.cpp move.cpp castlingRights.cpp AIMove.cpp  -I/opt/homebrew/Cellar/sfml@2/2.6.2/include/ -L/opt/homebrew/Cellar/sfml@2/2.6.2/lib/ -lsfml-graphics -lsfml-window -lsfml-system -std=c++17
+macOs::  g++ -o window window.cpp GameState.cpp move.cpp castlingRights.cpp AIMove.cpp -I/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/includes -I/opt/homebrew/Cellar/sfml@2/2.6.2/include/ -L/opt/homebrew/Cellar/sfml@2/2.6.2/lib/ -lsfml-graphics -lsfml-window -lsfml-system -std=c++17
+         ./window

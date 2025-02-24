@@ -28,11 +28,16 @@ public:
     std::vector<Move> movelogs = {};
     std::pair<int, int> whitekingLocation = {7, 4};
     std::pair<int, int> blackkingLocation = {0, 4};
+    
     bool incheck = false;
+    std::vector<std::tuple<int, int, int, int>> pins;  // squares where the allied pinned piece is and direction pinned from
+    std::vector<std::tuple<int, int, int, int>> checks;  // squares where enemy is applying a check
     bool checkMate = false;
     bool staleMate = false;
+    
     std::tuple<bool, std::vector<std::tuple<int, int, int, int>>, std::vector<std::tuple<int, int, int, int>>> checkStatus;
     std::pair<int, int> enPassantPossible = {};
+    std::vector<std::pair<int, int>> enPassantPossibleLogs = {enPassantPossible};
     CastlingRights currentCastlingRights{true, true, true, true};
     std::vector<CastlingRights> castlingRightsLogs = {CastlingRights(this->currentCastlingRights.white_king_side,this->currentCastlingRights.white_queen_side,
         this->currentCastlingRights.black_king_side,this->currentCastlingRights.black_queen_side)};
@@ -56,7 +61,7 @@ public:
     bool inCheck();
     bool squareUnderAttack(int row, int col);
     std::tuple<bool, std::vector<std::tuple<int, int, int, int>>, std::vector<std::tuple<int, int, int, int>>> checkForPinsAndChecks();
-    
+    std::vector<int> range(int start, int end, int step = 1);
     friend class Move;
     friend class CastlingRights;
 };

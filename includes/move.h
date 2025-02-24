@@ -19,6 +19,8 @@ public:
     bool isPawnPromotion;
     bool isEnpassant;
     bool castle;
+    bool castle_done;
+   
 
     Move(std::pair<int, int> startSq, std::pair<int, int> endSq, std::vector<std::vector<std::string>> board, bool isEnpassant = false,bool isPawnPromotion=false,bool castle = false);
 

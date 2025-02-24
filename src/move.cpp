@@ -17,7 +17,7 @@ Move::Move(std::pair<int, int> startSq, std::pair<int, int> endSq, std::vector<s
     //}
     this->isEnpassant = isEnpassant;
     this->pieceCaptured = isEnpassant ? (this->pieceMoved[0] == 'w' ? "bp" : "wp") : board[this->endRow][this->endCol];
-
+    this->castle = castle;
     
     
 }

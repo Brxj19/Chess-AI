@@ -13,12 +13,27 @@ void GameState::makeMove(Move move){
     
     this->board[move.startRow][move.startCol] = "--";
     this->board[move.endRow][move.endCol] = move.pieceMoved;
+    
+    // if (move.pieceMoved == "wK") {
+    //     this->whitekingLocation = std::make_pair(move.endRow, move.endCol);
+    //     if (abs(move.endCol - move.startCol) == 2) {
+    //         move.castle_done = true;
+    //     }
+    // } else if (move.pieceMoved == "bK") {
+    //     this->blackkingLocation = std::make_pair(move.endRow, move.endCol);
+    //     if (abs(move.endCol - move.startCol) == 2) {
+    //         move.castle_done = true;
+    //     }
+    // }
+    
     this->movelogs.push_back(move);
     this->whiteToMove = !this->whiteToMove;
+    
     if(move.pieceMoved == "wK")
         this->whitekingLocation = std::make_pair(move.endRow,move.endCol);
     if(move.pieceMoved == "bK")
         this->blackkingLocation = std::make_pair(move.endRow,move.endCol);
+    
     if(move.isPawnPromotion){
         //cout<<"choose a piece to promot your pawn 'Q','N','R','B' "<<endl;
         //string promotedpiece;
@@ -26,6 +41,7 @@ void GameState::makeMove(Move move){
         this->board[move.endRow][move.endCol] = std::string(1,move.pieceMoved[0]) +  "Q";
     }
     if (move.isEnpassant) {
+        
         this->board[move.startRow][move.endCol] = "--";  // Capturing the pawn via en passant
     }
 
@@ -37,6 +53,7 @@ void GameState::makeMove(Move move){
 
     //castle move
     if(move.castle){
+    
         if(move.endCol - move.startCol == 2){//its king side castle 
             this->board[move.endRow][move.endCol-1] = this->board[move.endRow][move.endCol+1];
             this->board[move.endRow][move.endCol+1] = "--";
@@ -46,6 +63,8 @@ void GameState::makeMove(Move move){
             this->board[move.endRow][move.endCol-2] = "--";
         }
     }
+
+    this->enPassantPossibleLogs.push_back(this->enPassantPossible);
     this->UpdateCastleRights(move);
     this->castlingRightsLogs.push_back(CastlingRights(this->currentCastlingRights.white_king_side,this->currentCastlingRights.white_queen_side,
         this->currentCastlingRights.black_king_side,this->currentCastlingRights.black_queen_side));
@@ -82,7 +101,27 @@ void GameState::UpdateCastleRights(Move move){
             }
         }
     }
-    
+    //if rook is captured
+    if(move.pieceCaptured == "wR"){
+        if(move.endRow == 7){
+            if(move.endCol == 0){
+                this->currentCastlingRights.white_queen_side = false;
+            }
+            else if(move.endCol == 7){
+                this->currentCastlingRights.white_king_side = false;
+            }
+        }
+    }
+    else if(move.pieceCaptured == "bR"){
+        if(move.endRow == 0){
+            if(move.endCol == 0){
+                this->currentCastlingRights.black_queen_side = false;
+            }
+            else if(move.endCol == 7){
+                this->currentCastlingRights.black_king_side = false;
+            }
+        }
+    }
     
 }
 void GameState::print_board(){
@@ -94,48 +133,109 @@ void GameState::print_board(){
     }
 }
 
-void GameState::undo_move(){
-    if(this->movelogs.size() != 0){
-        Move move = this->movelogs.back(); 
-        this->movelogs.pop_back(); 
-        this->board[move.startRow][move.startCol] = move.pieceMoved;
-        this->board[move.endRow][move.endCol] = move.pieceCaptured;
-        this->whiteToMove = !this->whiteToMove;
+// void GameState::undo_move(){
+//     if(this->movelogs.size() != 0){
+//         Move move = this->movelogs.back(); 
+//         this->movelogs.pop_back(); 
+//         this->board[move.startRow][move.startCol] = move.pieceMoved;
+//         this->board[move.endRow][move.endCol] = move.pieceCaptured;
+//         this->whiteToMove = !this->whiteToMove;
 
-        if(move.pieceMoved == "wK")
-            this->whitekingLocation = std::make_pair(move.startRow,move.startCol);
-        if(move.pieceMoved == "bK")
-            this->blackkingLocation = std::make_pair(move.startRow,move.startCol);
+//         if(move.pieceMoved == "wK")
+//             this->whitekingLocation = std::make_pair(move.startRow,move.startCol);
+//         else if(move.pieceMoved == "bK")
+//             this->blackkingLocation = std::make_pair(move.startRow,move.startCol);
 
-        if (move.isEnpassant) {
-            this->board[move.endRow][move.endCol] = "--";
-            this->board[move.startRow][move.endCol] = (this->whiteToMove) ? "bp" : "wp";  // Restoring captured pawn
-            this->enPassantPossible = std::make_pair(move.endRow, move.endCol);
-        }
+//         if (move.isEnpassant) {
+//             this->board[move.endRow][move.endCol] = "--";
+//             this->board[move.startRow][move.endCol] = (this->whiteToMove) ? "bp" : "wp";  // Restoring captured pawn
+//             //this->enPassantPossible = std::make_pair(move.endRow, move.endCol);
+//         }
 
-        if (move.pieceMoved[1] == 'p' && abs(move.startRow - move.endRow) == 2) {
-            this->enPassantPossible = {};
-        }
+//         //if (move.pieceMoved[1] == 'p' && abs(move.startRow - move.endRow) == 2) {
+//         //    this->enPassantPossible = {};
+//         //}
+//         this->enPassantPossibleLogs.pop_back();
+//         this->enPassantPossible = this->enPassantPossibleLogs.back();
 
-        this->castlingRightsLogs.pop_back();
-        this->currentCastlingRights = this->castlingRightsLogs.back();
+//         this->castlingRightsLogs.pop_back();
+//         this->currentCastlingRights = this->castlingRightsLogs.back();
 
-        //undo castle move
-        if(move.castle){
-            if(move.endCol - move.startCol == 2){
-                this->board[move.endRow][move.endCol+1] = this->board[move.endRow][move.endCol-1];
-                this->board[move.endRow][move.endCol-1] = "--";
-            }
-            else{
-                this->board[move.endRow][move.endCol-2] = this->board[move.endRow][move.endCol+1];
-                this->board[move.endRow][move.endCol+1] = "--";
-            }
-        }
-        this->checkMate = false;
-        this->staleMate = false;
+//         //undo castle move
+//         if(move.castle){
+//             if(move.endCol - move.startCol == 2){
+//                 this->board[move.endRow][move.endCol+1] = this->board[move.endRow][move.endCol-1];
+//                 this->board[move.endRow][move.endCol-1] = "--";
+//             }
+//             else{
+//                 this->board[move.endRow][move.endCol-2] = this->board[move.endRow][move.endCol+1];
+//                 this->board[move.endRow][move.endCol+1] = "--";
+//             }
+//         }
+//         this->checkMate = false;
+//         this->staleMate = false;
+//     }
+// }
+void GameState::undo_move() {
+    if (this->movelogs.empty()) {
+        return;  // No move to undo
     }
-}
 
+    Move lastMove = this->movelogs.back();
+    this->movelogs.pop_back();
+
+    // Revert the board state
+    this->board[lastMove.startRow][lastMove.startCol] = lastMove.pieceMoved;
+    this->board[lastMove.endRow][lastMove.endCol] = lastMove.pieceCaptured;
+
+    // Revert the king's position if the king was moved
+    if (lastMove.pieceMoved == "wK") {
+        this->whitekingLocation = std::make_pair(lastMove.startRow, lastMove.startCol);
+    } else if (lastMove.pieceMoved == "bK") {
+        this->blackkingLocation = std::make_pair(lastMove.startRow, lastMove.startCol);
+    }
+
+    // Revert castling rights
+    if (lastMove.castle) {
+        if (lastMove.endCol - lastMove.startCol == 2) {  // Kingside castle
+            this->board[lastMove.endRow][lastMove.endCol + 1] = this->board[lastMove.endRow][lastMove.endCol - 1];
+            this->board[lastMove.endRow][lastMove.endCol - 1] = "--";
+        } else {  // Queenside castle
+            this->board[lastMove.endRow][lastMove.endCol - 2] = this->board[lastMove.endRow][lastMove.endCol + 1];
+            this->board[lastMove.endRow][lastMove.endCol + 1] = "--";
+        }
+    }
+
+    // Revert en passant
+   if (lastMove.isEnpassant) {
+            this->board[lastMove.endRow][lastMove.endCol] = "--";
+            this->board[lastMove.startRow][lastMove.endCol] = !(this->whiteToMove) ? "bp" : "wp";  // Restoring captured pawn
+            //this->enPassantPossible = std::make_pair(move.endRow, move.endCol);
+        }
+
+        if (lastMove.pieceMoved[1] == 'p' && abs(lastMove.startRow - lastMove.endRow) == 2) {
+           this->enPassantPossible = {};
+        }
+        this->enPassantPossibleLogs.pop_back();
+        this->enPassantPossible = this->enPassantPossibleLogs.back();;
+
+    // Revert castling rights
+    
+    this->castlingRightsLogs.pop_back();
+    this->currentCastlingRights = this->castlingRightsLogs.back();
+
+    // Revert half-move clock
+    //this->halfMoveClock = this->halfMoveClockLog.back();
+    //this->halfMoveClockLog.pop_back();
+
+    // Revert full-move number
+    // if (!this->whiteToMove) {
+    //     this->fullMoveNumber--;
+    // }
+
+    // Switch turn back
+    this->whiteToMove = !this->whiteToMove;
+}
 void GameState::getPawnMoves(int row, int col, std::vector<Move> &moves) {
     bool piecePinned = false;
     std::tuple<int, int> pinDirection;
@@ -152,23 +252,31 @@ void GameState::getPawnMoves(int row, int col, std::vector<Move> &moves) {
     }
 
     // Declare variables outside the conditional blocks to keep their scope
-    int moveAMT, startRow, endRow;
+    int moveAMT, startRow, endRow,kingRow,kingCol;
     char enemyColor;
+    vector<int> insideRange;
+    vector<int> outsideRange;
 
     if (this->whiteToMove) {
         moveAMT = -1;
         startRow = 6;
         endRow = 0;
         enemyColor = 'b';
+        kingRow = this->whitekingLocation.first;
+        kingCol = this->whitekingLocation.second;
+
     } else {
         moveAMT = 1;
         startRow = 1;
         endRow = 7;
         enemyColor = 'w';
+        kingRow = this->blackkingLocation.first;
+        kingCol = this->blackkingLocation.second;
     }
 
     bool pawnPromotion = false;
-
+    bool attackingPiece = false;
+    bool blockingPiece = false;
     // Check if the square in front is empty
     if (row + moveAMT >= 0 && row + moveAMT <= 7 && this->board[row + moveAMT][col] == "--") {
         if (!piecePinned || pinDirection == std::make_tuple(moveAMT, 0)) {
@@ -192,12 +300,40 @@ void GameState::getPawnMoves(int row, int col, std::vector<Move> &moves) {
                 Move m(std::make_pair(row, col), std::make_pair(row + moveAMT, col - 1), this->board, false, pawnPromotion);
                 moves.push_back(m);
             }
-        }
-        // En passant capture to the left
-        if (std::make_pair(row + moveAMT, col - 1) == this->enPassantPossible) {
-            if (!piecePinned || pinDirection == std::make_tuple(moveAMT, -1)) {
-                Move m(std::make_pair(row, col), std::make_pair(row + moveAMT, col - 1), this->board, true);
-                moves.push_back(m);
+        
+            // En passant capture to the left
+            if (std::make_pair(row + moveAMT, col - 1) == this->enPassantPossible) {
+                //if (!piecePinned || pinDirection == std::make_tuple(moveAMT, -1)) {
+                if(kingRow == row){
+                    if(kingCol < col){
+                        insideRange = range(kingCol+1,col-1);
+                        outsideRange = range(col+1,8);
+                    }else{
+                        insideRange = range(kingCol-1,col,-1);
+                        outsideRange = range(col-2,-1,-1);
+                    }
+                    for(auto i:insideRange){
+                        if(this->board[row][i] != "--"){
+                            blockingPiece = true;
+                            break;
+                        }
+                    }
+                    for(auto i : outsideRange){
+                        if(this->board[row][i][0] == enemyColor && (this->board[row][i][1] == 'R' || this->board[row][i][1] == 'Q')){
+                            attackingPiece = true;
+                            break;
+                        }else if(this->board[row][i] != "--"){
+                            blockingPiece = true;
+                            break;
+                        }
+                    }
+                }
+                if(!attackingPiece || blockingPiece){
+                    Move m(std::make_pair(row, col), std::make_pair(row + moveAMT, col - 1), this->board, true);
+                    moves.push_back(m);
+                }
+                //Move m(std::make_pair(row, col), std::make_pair(row + moveAMT, col - 1), this->board, true);
+               // moves.push_back(m);
             }
         }
     }
@@ -210,12 +346,40 @@ void GameState::getPawnMoves(int row, int col, std::vector<Move> &moves) {
                 Move m(std::make_pair(row, col), std::make_pair(row + moveAMT, col + 1), this->board, false, pawnPromotion);
                 moves.push_back(m);
             }
-        }
-        // En passant capture to the right
-        if (std::make_pair(row + moveAMT, col + 1) == this->enPassantPossible) {
-            if (!piecePinned || pinDirection == std::make_tuple(moveAMT, 1)) {
-                Move m(std::make_pair(row, col), std::make_pair(row + moveAMT, col + 1), this->board, true);
-                moves.push_back(m);
+        
+            // En passant capture to the right
+            if (std::make_pair(row + moveAMT, col + 1) == this->enPassantPossible) {
+                //if (!piecePinned || pinDirection == std::make_tuple(moveAMT, 1)) {
+                if(kingRow == row){
+                    if(kingCol < col){
+                        insideRange = range(kingCol+1,col);
+                        outsideRange = range(col+2,8);
+                    }else{
+                        insideRange = range(kingCol-1,col+1,-1);
+                        outsideRange = range(col-1,-1,-1);
+                    }
+                    for(auto i:insideRange){
+                        if(this->board[row][i] != "--"){
+                            blockingPiece = true;
+                            break;
+                        }
+                    }
+                    for(auto i : outsideRange){
+                        if(this->board[row][i][0] == enemyColor && (this->board[row][i][1] == 'R' || this->board[row][i][1] == 'Q')){
+                            attackingPiece = true;
+                            break;
+                        }else if(this->board[row][i] != "--"){
+                            blockingPiece = true;
+                            break;
+                        }
+                    }
+                }
+                if(!attackingPiece || blockingPiece){
+                    Move m(std::make_pair(row, col), std::make_pair(row + moveAMT, col + 1), this->board, true);
+                    moves.push_back(m);
+                }
+                //Move m(std::make_pair(row, col), std::make_pair(row + moveAMT, col + 1), this->board, true);
+                //moves.push_back(m);
             }
         }
     }
@@ -482,8 +646,8 @@ std::vector<Move> GameState::getValidMoves() {
     std::vector<Move> moves;
     this->checkStatus = this->checkForPinsAndChecks();
     this->incheck = std::get<0>(this->checkStatus);
-    auto& pins = std::get<1>(this->checkStatus);
-    auto& checks = std::get<2>(this->checkStatus);
+    this->pins = std::get<1>(this->checkStatus);
+    this->checks = std::get<2>(this->checkStatus);
 
     int kingRow, kingCol;
     if (this->whiteToMove) {
@@ -520,17 +684,31 @@ std::vector<Move> GameState::getValidMoves() {
             }
 
             // Get rid of moves that don't block check or move king
-            moves.erase(std::remove_if(moves.begin(), moves.end(), [&](Move move) {
-                if (move.pieceMoved == "wK" || move.pieceMoved == "bK") {
-                    return false;  // King's moves are allowed
-                }
-                for (auto square : validSquares) {
-                    if (std::get<0>(square) == move.endRow && std::get<1>(square) == move.endCol) {
-                        return false;  // Valid move
+            for(int i = moves.size()-1 ; i>=0 ; i--){
+                if(moves[i].pieceMoved[1] != 'K' ){
+                    bool validMove = false;
+                    for(auto square : validSquares){
+                        if(moves[i].endRow == std::get<0>(square) && moves[i].endCol == std::get<1>(square)){
+                            validMove = true;
+                            break;
+                        }
+                    }
+                    if(!validMove){
+                        moves.erase(moves.begin()+i);
                     }
                 }
-                return true;  // Not a valid move to block check
-            }), moves.end());
+            }
+            // moves.erase(std::remove_if(moves.begin(), moves.end(), [&](Move move) {
+            //     if (move.pieceMoved == "wK" || move.pieceMoved == "bK") {
+            //         return false;  // King's moves are allowed
+            //     }
+            //     for (auto square : validSquares) {
+            //         if (std::get<0>(square) == move.endRow && std::get<1>(square) == move.endCol) {
+            //             return false;  // Valid move
+            //         }
+            //     }
+            //     return true;  // Not a valid move to block check
+            // }), moves.end());
 
         } else {  // Double check, king must move
             this->getKingMoves(kingRow, kingCol, moves);
@@ -549,12 +727,15 @@ std::vector<Move> GameState::getValidMoves() {
 }
 
 bool GameState::inCheck(){
-    if(this->whiteToMove){
-        return squareUnderAttack(this->whitekingLocation.first,this->whitekingLocation.second);
-    }
-    else{
-        return squareUnderAttack(this->blackkingLocation.first, this->whitekingLocation.second);
-    }
+    // if(this->whiteToMove){
+    //     return squareUnderAttack(this->whitekingLocation.first,this->whitekingLocation.second);
+    // }
+    // else{
+    //     return squareUnderAttack(this->blackkingLocation.first, this->whitekingLocation.second);
+    // }
+    std::tuple<bool, std::vector<std::tuple<int, int, int, int>>, std::vector<std::tuple<int, int, int, int>>> tempcheckStatus;
+    tempcheckStatus = this->checkForPinsAndChecks();
+    return std::get<0>(tempcheckStatus);
 }
 
 bool GameState::squareUnderAttack(int row, int col){
@@ -624,14 +805,17 @@ GameState::checkForPinsAndChecks() {
                         if (!pieceBetween) {  // No piece blocking, it's a check
                             inCheck = true;
                             checks.push_back(std::make_tuple(endRow, endCol, dRow, dCol));
+                            break;
                         } else {  // Piece between, it's a pin
                             pins.push_back(possiblePin);
+                            break;
                         }
-                        break;
+                        
                     } else {  // Other enemy pieces (Knight, etc.)
                         break;
                     }
                 }
+            
             } else {
                 break;  // Out of bounds
             }
@@ -653,4 +837,24 @@ GameState::checkForPinsAndChecks() {
     }
 
     return std::make_tuple(inCheck, pins, checks);
+}
+
+std::vector<int> GameState::range(int start, int stop, int step) {
+    if (step == 0) {
+        throw std::invalid_argument("Step must not be zero.");
+    }
+
+    std::vector<int> result;
+
+    if (start < stop && step > 0) {
+        for (int value = start; value < stop; value += step) {
+            result.push_back(value);
+        }
+    } else if (start > stop && step < 0) {
+        for (int value = start; value > stop; value += step) {
+            result.push_back(value);
+        }
+    }
+
+    return result;
 }

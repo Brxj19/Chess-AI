@@ -1,4 +1,5 @@
 #include<SFML/Graphics.hpp>
+#include<SFML/Audio.hpp>
 #include<iostream>
 #include<vector>
 #include<string>
@@ -7,9 +8,11 @@
 #include "move.h"
 #include "AIMove.h"
 
-std::vector<sf::Color> colors {sf::Color::White,sf::Color(0, 128, 120)};//gray 128,128,128
+std::vector<sf::Color> colors {sf::Color(235,236,211),sf::Color(125, 148, 93)};//gray 128,128,128
 int width = 640;
 int height = width;
+int log_panel_width = 250;
+int log_panel_height = height;
 int dimension = 8;
 int sq_size = width/dimension;
 
@@ -20,7 +23,7 @@ void load_images(std::map<std::string, sf::Texture> &images, sf::Texture &wp, sf
     };
 
     for (auto& p : pieces) {
-        if (!p.second->loadFromFile("images/" + p.first + ".png")) {
+        if (!p.second->loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/assets/piece_sets/neo_set/" + p.first + ".png")) {
             std::cerr << "Error loading image: " << "images/" + p.first + ".png" << std::endl;
         }
         images[p.first] = *p.second;
@@ -79,7 +82,7 @@ void highlightSquares(sf::RenderWindow &window, GameState &gs, const std::vector
 void Animate(Move move,sf::RenderWindow &window,GameState &gs,sf::Clock clock,int sq_size,std::map<std::string, sf::Texture> &images){
     int dR = move.endRow - move.startRow;
     int dC = move.endCol - move.startCol;
-    int framesPerSquare = 50;  // frames to move one square
+    int framesPerSquare = 2;  // frames to move one square
     int frameCount = (std::abs(dR) + std::abs(dC)) * framesPerSquare;
 
     for (int frame = 0; frame <= frameCount; ++frame) {
@@ -99,9 +102,21 @@ void Animate(Move move,sf::RenderWindow &window,GameState &gs,sf::Clock clock,in
 
         // Draw captured piece onto rectangle
         if (move.pieceCaptured != "--") {
-            sf::Sprite captured(images.at(move.pieceCaptured));
-            captured.setPosition(move.endCol * sq_size, move.endRow * sq_size);
-            window.draw(captured);
+            if(move.isEnpassant){
+                int enPassantPawnRow = (move.pieceCaptured[0] == 'b') ? move.endRow + 1 : move.endRow - 1;
+                endSquare.setPosition(move.endCol * sq_size, enPassantPawnRow * sq_size);
+                sf::Sprite captured(images.at((move.pieceMoved[0] == 'w') ? "bp" : "wp"));
+                captured.setPosition(move.endCol * sq_size, enPassantPawnRow * sq_size);
+                window.draw(captured);
+            }
+            else{
+                sf::Sprite captured(images.at(move.pieceCaptured));
+                captured.setPosition(move.endCol * sq_size, move.endRow * sq_size);
+                window.draw(captured);
+            }
+            //sf::Sprite captured(images.at(move.pieceCaptured));
+            //captured.setPosition(move.endCol * sq_size, move.endRow * sq_size);
+            //window.draw(captured);
         }
 
         // Draw moving piece
@@ -115,9 +130,9 @@ void Animate(Move move,sf::RenderWindow &window,GameState &gs,sf::Clock clock,in
     }
 }
 
-void drawText(sf::RenderWindow &window,std::string text){
+void drawEndGameText(sf::RenderWindow &window,std::string text){
     sf::Font font;
-    if (!font.loadFromFile("./fonts/helvetica.ttf")) {
+    if (!font.loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/fonts/helvetica.ttf")) {
         // Handle error
         return;
     }
@@ -138,13 +153,36 @@ void drawText(sf::RenderWindow &window,std::string text){
     // Draw the text
     window.draw(textObject);
 }
-
+void DrawMoveLog(sf::RenderWindow &window,GameState gs){
+    sf::Font font;
+    if (!font.loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/fonts/helvetica.ttf")) {
+        // Handle error
+        return;
+    }
+    sf::RectangleShape logPanel(sf::Vector2f(log_panel_width, log_panel_height));
+    int x = width+12;
+    int y = 0;
+    int charSize = 12;
+    for(int i=0;i<gs.movelogs.size();i++){
+        sf::Text text;
+        text.setFont(font);
+        text.setString(gs.movelogs[i].getChessNotation());
+        text.setCharacterSize(charSize);
+        text.setFillColor(sf::Color::White);
+        text.setStyle(sf::Text::Bold);
+        text.setPosition(x,y);
+        window.draw(text);
+        y+=charSize;
+    }
+}
 void DrawGameState(sf::RenderWindow &window,GameState gs,int sq_size,std::map<std::string, sf::Texture> &images,const std::vector<Move> &validMoves,std::pair<int,int> sqSelected){
     drawBoard(window,sq_size);
     highlightSquares(window,gs,validMoves,sqSelected,sq_size);
     drawPiece(window,gs,sq_size,images);
+    DrawMoveLog(window,gs);
 }
 
+#ifndef UNIT_TEST
 int main() {
 
    
@@ -160,7 +198,7 @@ int main() {
     bool gameOver = false;
     load_images(images,wp,wR,wN,wB,wQ,wK,bp,bR,bN,bB,bQ,bK);
 
-    sf::RenderWindow window(sf::VideoMode(width,height), "CHESS");
+    sf::RenderWindow window(sf::VideoMode(width + log_panel_width ,height), "CHESS");
     sf::Clock clock;
     std::pair<int,int> sqSelected = {NULL,NULL};
     std::vector<std::pair<int,int>> playerClicks = {};
@@ -169,6 +207,21 @@ int main() {
     bool playerTwo = false; // its same as above but for black 
     bool humanTurn;
     AIMove ai;
+
+    sf::SoundBuffer moveBuffer, captureBuffer, castleBuffer, checkBuffer;
+    if (!moveBuffer.loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/assets/audio/move.wav") ||
+        !captureBuffer.loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/assets/audio/capture.wav") ||
+        !castleBuffer.loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/assets/audio/castle.wav") ||
+        !checkBuffer.loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/assets/audio/check.wav")) {
+        std::cerr << "Error loading sound files" << std::endl;
+        return -1;
+    }
+
+    sf::Sound moveSound(moveBuffer);
+    sf::Sound captureSound(captureBuffer);
+    sf::Sound castleSound(castleBuffer);
+    sf::Sound checkSound(checkBuffer);
+
     while (window.isOpen()) {
         humanTurn = (gs.whiteToMove && playerOne) || (!gs.whiteToMove && playerTwo);
         sf::Event e;
@@ -214,6 +267,19 @@ int main() {
                                     animate = true;
                                     sqSelected = std::make_pair(-1, -1);
                                     playerClicks.clear();
+
+                                    if (validMoves[i].castle) {
+                                        castleSound.play();
+                                        
+                                    }else if (validMoves[i].pieceCaptured != "--" && gs.inCheck()) {
+                                        checkSound.play();
+                                    }else if (validMoves[i].pieceCaptured != "--" || validMoves[i].isEnpassant) {
+                                        captureSound.play();
+                                    }else if (gs.inCheck()) {
+                                        checkSound.play();
+                                    } else {
+                                        moveSound.play();
+                                    }
                                     break;
                                 }
                                 // Reset the selection and clicks after the move
@@ -240,7 +306,7 @@ int main() {
             }
         }
         if(!gameOver && !humanTurn){
-            Move AIMove = ai.findBestMoveMinMax(gs,validMoves);
+            Move AIMove = ai.findBestMove(gs,validMoves);
             if(AIMove == Move(std::make_pair(0,0),std::make_pair(0,0),gs.board)){
                 AIMove = ai.findRandomMove(validMoves);
             }
@@ -249,6 +315,20 @@ int main() {
             gs.print_board();
             moveMade=true;
             animate=true;
+
+            // Play sound based on move type
+            if (AIMove.castle) {
+                castleSound.play();
+            } 
+            else if (AIMove.pieceCaptured != "--" && gs.inCheck()) {
+                checkSound.play();
+            }else if(AIMove.pieceCaptured != "--" || AIMove.isEnpassant){
+                captureSound.play();
+            }else if(gs.inCheck()){
+                checkSound.play();
+            }else {
+                moveSound.play();
+            }
         }
         if(moveMade){
             if(animate)
@@ -261,6 +341,10 @@ int main() {
             }
             moveMade = false;
             animate = false;
+
+            // if (gs.inCheck()) {
+            //     checkSound.play();
+            // }
         }
 
         
@@ -274,17 +358,18 @@ int main() {
         if(gs.checkMate){
             gameOver = true;
             if(gs.whiteToMove){
-                drawText(window,"Black Wins By Checkmate");
+                drawEndGameText(window,"Black Wins By Checkmate");
             }
             else{
-                drawText(window,"White Wins By Checkmate");
+                drawEndGameText(window,"White Wins By Checkmate");
             }
         }
         if(gs.staleMate){
             gameOver = true;
-            drawText(window,"Stalemate");
+            drawEndGameText(window,"Stalemate");
         }
         window.display();
     }
     return 0;
 }
+#endif
