@@ -97,6 +97,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the MIT License. See the LICENSE file for details.
 ```
-
-Feel free to customize the `README.md` file as needed for your project.
-Feel free to customize the `README.md` file as needed for your project.
