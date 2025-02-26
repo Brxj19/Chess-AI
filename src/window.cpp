@@ -54,6 +54,8 @@ void drawPiece(sf::RenderWindow &window,GameState gs,int sq_size,std::map<std::s
         }
     }
 }
+
+//highlights the squares that are valid moves
 void highlightSquares(sf::RenderWindow &window, GameState &gs, const std::vector<Move> &validMoves, std::pair<int, int> sqSelected, int sq_size) {
     if (sqSelected != std::make_pair(-1, -1)) {
         int row = sqSelected.first;
@@ -78,6 +80,21 @@ void highlightSquares(sf::RenderWindow &window, GameState &gs, const std::vector
         }
     }
 }
+
+//highlight the last move
+void highlightLastMove(sf::RenderWindow &window, const Move &lastMove, int sq_size) {
+    sf::RectangleShape square(sf::Vector2f(sq_size, sq_size));
+    square.setFillColor(sf::Color(255, 0, 0, 100)); // RGBA: red, semi-transparent
+
+    // Highlight the start square of the last move
+    square.setPosition(lastMove.startCol * sq_size, lastMove.startRow * sq_size);
+    window.draw(square);
+
+    // Highlight the end square of the last move
+    square.setPosition(lastMove.endCol * sq_size, lastMove.endRow * sq_size);
+    window.draw(square);
+}
+
 ////animate the moved piece
 void Animate(Move move,sf::RenderWindow &window,GameState &gs,sf::Clock clock,int sq_size,std::map<std::string, sf::Texture> &images){
     int dR = move.endRow - move.startRow;
@@ -153,6 +170,7 @@ void drawEndGameText(sf::RenderWindow &window,std::string text){
     // Draw the text
     window.draw(textObject);
 }
+
 void DrawMoveLog(sf::RenderWindow &window,GameState gs){
     sf::Font font;
     if (!font.loadFromFile("/Users/deepak/Brajs_workspace/Project_Workspace/cpp_Projects/chessAI/fonts/helvetica.ttf")) {
@@ -182,11 +200,15 @@ void DrawMoveLog(sf::RenderWindow &window,GameState gs){
     
     }
 }
+
 void DrawGameState(sf::RenderWindow &window,GameState gs,int sq_size,std::map<std::string, sf::Texture> &images,const std::vector<Move> &validMoves,std::pair<int,int> sqSelected){
     drawBoard(window,sq_size);
     highlightSquares(window,gs,validMoves,sqSelected,sq_size);
-    drawPiece(window,gs,sq_size,images);
     DrawMoveLog(window,gs);
+    if(!gs.movelogs.empty()){
+        highlightLastMove(window,gs.movelogs.back(),sq_size);
+    }
+    drawPiece(window,gs,sq_size,images);
 }
 
 #ifndef UNIT_TEST
@@ -211,7 +233,7 @@ int main() {
     std::vector<std::pair<int,int>> playerClicks = {};
     //sf::Clock clock;
     bool playerOne = true;//it is true when a human is playing as white and false when AI playes white
-    bool playerTwo = true; // its same as above but for black 
+    bool playerTwo = !true; // its same as above but for black 
     bool humanTurn;
     AIMove ai;
 
@@ -233,6 +255,14 @@ int main() {
 
     notifySound.setVolume(100);
     notifySound.play();
+
+    // Dragging variables
+    bool draggingPiece = false;
+    sf::Sprite draggedSprite;
+    std::pair<int, int> dragStartSquare = {-1, -1};
+    std::string draggedPiece = "--";
+    sf::Vector2f dragOffset;
+
     while (window.isOpen()) {
         humanTurn = (gs.whiteToMove && playerOne) || (!gs.whiteToMove && playerTwo);
         sf::Event e;
@@ -240,7 +270,76 @@ int main() {
             if (e.type == sf::Event::Closed) {
                 window.close();
             }
-            
+            // Mouse Pressed: Start Dragging
+            // if (e.type == sf::Event::MouseButtonPressed && e.mouseButton.button == sf::Mouse::Left) {
+            //     if (!gameOver && humanTurn) {
+            //         sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+            //         int col = mousePos.x / sq_size;
+            //         int row = mousePos.y / sq_size;
+
+            //         if (gs.board[row][col] != "--" && gs.board[row][col][0] == (gs.whiteToMove ? 'w' : 'b')) {
+            //             draggingPiece = true;
+            //             dragStartSquare = {row, col};
+            //             draggedPiece = gs.board[row][col];
+            //             draggedSprite.setTexture(images.at(draggedPiece));
+            //             draggedSprite.setScale((float)sq_size / 100, (float)sq_size / 100);
+            //             dragOffset = sf::Vector2f(mousePos.x - col * sq_size, mousePos.y - row * sq_size);
+            //         }
+            //     }
+            // }
+
+            // // Mouse Moved: Dragging Motion
+            // if (e.type == sf::Event::MouseMoved && draggingPiece) {
+            //     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+            //     draggedSprite.setPosition(mousePos.x - dragOffset.x, mousePos.y - dragOffset.y);
+            // }
+
+            // // Mouse Released: Drop the Piece
+            // if (e.type == sf::Event::MouseButtonReleased && e.mouseButton.button == sf::Mouse::Left && draggingPiece) {
+            //     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+            //     int endCol = mousePos.x / sq_size;
+            //     int endRow = mousePos.y / sq_size;
+
+            //     Move move(dragStartSquare, {endRow, endCol}, gs.board);
+
+            //     for(int i=0 ; i<validMoves.size();++i){
+            //         // Check if the move is valid
+            //         if (move == validMoves[i]) {
+            //             std::cout << "Move played: " << move.getChessNotation() << std::endl;
+            //             gs.makeMove(validMoves[i]);
+            //             gs.print_board(); // print the board after making move
+            //             std::cout<<endl;
+            //             moveMade = true; // Flag that a move was made
+            //             animate = true;
+            //             sqSelected = std::make_pair(-1, -1);
+            //             playerClicks.clear();
+
+            //             if (validMoves[i].castle) {
+            //                 castleSound.setVolume(100);
+            //                 castleSound.play();
+                            
+            //             }else if (validMoves[i].pieceCaptured != "--" && gs.inCheck()) {
+            //                 checkSound.setVolume(100);
+            //                 checkSound.play();
+            //             }else if (validMoves[i].pieceCaptured != "--" || validMoves[i].isEnpassant) {
+            //                 captureSound.setVolume(100);
+            //                 captureSound.play();
+            //             }else if (gs.inCheck()) {
+            //                 checkSound.setVolume(100);
+            //                 checkSound.play();
+            //             } else {
+            //                 moveSound.setVolume(100);
+            //                 moveSound.play();
+            //             }
+            //             break;
+            //         }
+            //         // Reset the selection and clicks after the move
+            //     }
+
+            //     // Reset Dragging State
+            //     draggingPiece = false;
+            //     draggedPiece = "--";
+            // }
             if (e.type == sf::Event::MouseButtonPressed && e.mouseButton.button == sf::Mouse::Left) {
                 if(!gameOver && humanTurn){
                     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
@@ -296,6 +395,7 @@ int main() {
                                         moveSound.setVolume(100);
                                         moveSound.play();
                                     }
+                                    
                                     break;
                                 }
                                 // Reset the selection and clicks after the move
@@ -350,6 +450,7 @@ int main() {
                 moveSound.setVolume(100);
                 moveSound.play();
             }
+            
         }
         if(moveMade){
             if(animate)
@@ -388,6 +489,9 @@ int main() {
         if(gs.staleMate){
             gameOver = true;
             drawEndGameText(window,"Stalemate");
+        }
+        if (draggingPiece) {
+            window.draw(draggedSprite);
         }
         window.display();
     }

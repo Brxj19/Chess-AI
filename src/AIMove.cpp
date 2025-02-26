@@ -70,6 +70,7 @@ int AIMove::scoreBoard(GameState gs){
     }
     return score;
 }
+
 Move AIMove::findBestMove(GameState gs, vector<Move> validMoves){
     int score =0;
     std::random_device rd;
